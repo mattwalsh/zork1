@@ -855,6 +855,79 @@ killing yourself." CR CR>
 <ROUTINE V-LOCK ()
 	 <TELL "It doesn't seem to work." CR>>
 
+<ROUTINE V-HOW-LIT("AUX" RETVAL)
+   <COND (<NOT ,LIT> <SET RETVAL "dark">) (ELSE 
+      <COND (<FSET? ,HERE ,ONBIT> <SET RETVAL "room_lighting">) (ELSE
+         <SET RETVAL "player_lighting">)> )>
+
+   
+    <RETURN ,RETVAL>
+>
+
+<ROUTINE V-ROOMS("AUX" F N TMP)
+	 <COND (<SET F <FIRST? ROOMS>>
+		<REPEAT ()
+			<SET N <NEXT? .F>>
+         
+         <TELL "<ROOM name='" D .F "' description='">
+
+		<COND (<APPLY <GETP .F ,P?ACTION> ,M-LOOK>)
+
+		      (<SET TMP <GETP .F ,P?LDESC>>
+		       <TELL .TMP >)
+		      (T
+		       <APPLY <GETP .F ,P?ACTION> ,M-FLASH>)>
+         <TELL "'>" CR>
+          <PRINT-FLAT-CONTENTS .F>
+         <TELL "</ROOM>" CR>
+   
+			<SET F .N>
+			<COND (<NOT .F> <RTRUE>)>
+>)>>
+
+<ROUTINE V-IMAGE-RENDER()
+    <TELL "<RENDER>" CR>
+
+    <TELL "<ROOM_NAME>" >
+    <TELL D, HERE>
+    <TELL "</ROOM_NAME>" CR >
+
+    <TELL "<SCORE>" >
+    <TELL N ,SCORE>
+    <TELL "</SCORE>" CR >
+
+    <TELL "<SCORE_MAX>350</SCORE_MAX>" CR>
+
+    <TELL "<MOVES>" >
+    <TELL N ,MOVES>
+    <TELL "</MOVES>" CR>
+
+    <TELL "<RANK>" >
+    <TELL <V-SCORE-RANK>>
+    <TELL "</RANK>" CR>
+
+    <TELL "<LIGHTING>">
+    <TELL <V-HOW-LIT>>
+    <TELL "</LIGHTING>" CR>
+
+    <TELL "<ROOM>">
+	 <COND (<DESCRIBE-ROOM T T>
+		<DESCRIBE-OBJECTS T>)>
+    <TELL "</ROOM>" CR>
+    <TELL "<ROOM_ITEMS>">
+       <PRINT-FLAT-CONTENTS, HERE>
+    <TELL "</ROOM_ITEMS>" CR>
+    <TELL "<DEATHS>" N ,DEATHS "</DEATHS>" CR>
+
+    <TELL "<INVENTORY>">
+    <PRINT-FLAT-CONTENTS, WINNER>
+    <TELL "</INVENTORY>" CR>
+    <TELL "<TROPHY>" CR>
+    <PRINT-FLAT-CONTENTS, TROPHY-CASE>
+    <TELL "</TROPHY>" CR>
+    <TELL "</RENDER>" CR>
+>
+
 <ROUTINE V-LOOK ()
 	 <COND (<DESCRIBE-ROOM T>
 		<DESCRIBE-OBJECTS T>)>>
@@ -1630,9 +1703,9 @@ direction." CR>
 <ROUTINE V-FIRST-LOOK ()
 	 <COND (<DESCRIBE-ROOM>
 		<COND (<NOT ,SUPER-BRIEF>
-		       <DESCRIBE-OBJECTS>)>)>>
+         <DESCRIBE-OBJECTS>)>)>>
 
-<ROUTINE DESCRIBE-ROOM ("OPTIONAL" (LOOK? <>) "AUX" V? STR AV)
+<ROUTINE DESCRIBE-ROOM ("OPT" (LOOK? <>) SKIP_TITLE "AUX" V? STR AV)
 	 <SET V? <OR .LOOK? ,VERBOSE>>
 	 <COND (<NOT ,LIT>
 		<TELL "It is pitch black.">
@@ -1655,7 +1728,7 @@ detect a dim light from the east." CR>)>)
 		         <FCLEAR ,HERE ,TOUCHBIT>)>)
 		(T
 		 '<NULL-F>)>
-	 <COND (<IN? ,HERE ,ROOMS>
+	 <COND (<AND <IN? ,HERE ,ROOMS> <NOT, SKIP_TITLE>>
 		;"Was <TELL D ,HERE CR>"
 		<TELL D ,HERE>
 		<COND (<FSET? <SET AV <LOC ,WINNER>> ,VEHBIT>
@@ -1726,6 +1799,18 @@ long description (fdesc or ldesc), otherwise will print short."
 	 <CRLF>
 	 <COND (<AND <SEE-INSIDE? .OBJ> <FIRST? .OBJ>>
 		<PRINT-CONT .OBJ .V? .LEVEL>)>>
+
+<ROUTINE PRINT-FLAT-CONTENTS (OBJ "AUX" F N )
+	 <COND (<SET F <FIRST? .OBJ>>
+		<REPEAT ()
+			<SET N <NEXT? .F>>
+			<COND (<NOT <FSET? .F ,INVISIBLE>>
+         <TELL "<ITEM name=\"" D .F "\">">
+         <COND (<FIRST? .F><PRINT-FLAT-CONTENTS .F>)>
+         <TELL "</ITEM>" CR>)>
+			<SET F .N>
+			<COND (<NOT .F> <RTRUE>)>
+>)>>
 
 <ROUTINE PRINT-CONTENTS (OBJ "AUX" F N (1ST? T) (IT? <>) (TWO? <>))
 	 <COND (<SET F <FIRST? .OBJ>>
